@@ -1,0 +1,16 @@
+services:
+  - type: web
+    name: flask-backend
+    env: python
+    region: oregon
+    plan: free
+    buildCommand: pip install -r requirements.txt
+    startCommand: python app.py
+    autoDeploy: true
+
+  - type: static
+    name: frontend
+    env: static
+    buildCommand: npm install && npm run build  # Adjust based on how you build your frontend
+    staticPublishPath: /build  # Path where your frontend build is located
+    autoDeploy: true
