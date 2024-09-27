@@ -8,9 +8,12 @@ services:
     startCommand: python app.py
     autoDeploy: true
 
-  - type: static
+  - type: web
     name: frontend
-    env: static
-    buildCommand: npm install && npm run build  # Adjust based on how you build your frontend
-    staticPublishPath: /build  # Path where your frontend build is located
+    env: node
+    region: oregon
+    plan: free
+    buildCommand: npm install && npm run build # Adjust based on how you build your frontend
+    startCommand: serve -s build
     autoDeploy: true
+    staticPublishPath: /build
