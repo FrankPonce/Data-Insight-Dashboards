@@ -16,4 +16,3 @@ services:
     buildCommand: npm install && npm run build # Adjust based on how you build your frontend
     startCommand: serve -s build
     autoDeploy: true
-    staticPublishPath: /build
