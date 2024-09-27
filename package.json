@@ -1,12 +1,16 @@
 {
   "name": "showcase_website",
   "version": "1.0.0",
-  "description": "",
+  "description": "A showcase website for Data Insight Dashboards",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "build": "echo 'Building static website...'",
+    "start": "serve ."
   },
   "keywords": [],
-  "author": "",
-  "license": "ISC"
+  "author": "Frank Mediavilla",
+  "license": "ISC",
+  "devDependencies": {
+    "serve": "^14.2.0"
+  }
 }
