@@ -1,4 +1,5 @@
 from flask import Flask, render_template
+import os
 from backend import (
     generate_logs, stream_bottleneck_data, rollout_feature, get_node_status,
     get_kubernetes_metrics, get_feature_data, stream_kubernetes_data, stream_node_data
