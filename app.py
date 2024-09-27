@@ -69,4 +69,5 @@ def stream_kubernetes_data_route():
     return stream_kubernetes_data()
 
 if __name__ == '__main__':
-    app.run(debug=True)
+    app.run(debug=True, host='0.0.0.0', port=5000)
+
