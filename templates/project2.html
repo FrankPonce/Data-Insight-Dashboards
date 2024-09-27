@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="/static/styles.css">
+    <title>Service Bottleneck Detector</title>
+    <style>
+        body {
+            background-color: #1e1e1e;
+            color: white;
+            font-family: Arial, sans-serif;
+        }
+
+        h1, p {
+            text-align: center;
+        }
+
+        .container {
+            display: flex;
+            justify-content: space-around;
+            margin-top: 20px;
+        }
+
+        .chart-container {
+            width: 60%;
+            background: rgba(0, 0, 0, 0.3);
+            padding: 20px;
+            border-radius: 10px;
+        }
+
+        .service-list {
+            width: 30%;
+            background-color: #333;
+            border-radius: 10px;
+            padding: 20px;
+        }
+
+        .service-item {
+            margin-bottom: 15px;
+            padding: 10px;
+            background-color: #444;
+            border-radius: 5px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .service-name {
+            color: white;
+        }
+
+        .service-status {
+            font-weight: bold;
+            color: white;
+        }
+
+        .service-item.red .service-name {
+            color: red;
+        }
+
+        .btn {
+            background-color: #f44336;
+            border: none;
+            color: white;
+            padding: 5px 10px;
+            cursor: pointer;
+            border-radius: 5px;
+        }
+
+        canvas {
+            width: 100%;
+            height: 300px;
+        }
+    </style>
+</head>
+<body>
+    <h1>Service Bottleneck Detector</h1>
+    <p>This project detects performance bottlenecks in microservices with real-time monitoring.</p>
+    <a href="/" class="back-arrow">
+        🡸 Back
+    </a>
+
+    <div class="container">
+        <!-- Chart Section -->
+        <div class="chart-container">
+            <canvas id="bottleneck-chart"></canvas>
+        </div>
+
+        <!-- Service List Section -->
+        <div class="service-list" id="service-list">
+            <h3>Services</h3>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+        const bottleneckCtx = document.getElementById('bottleneck-chart').getContext('2d');
+        const serviceListContainer = document.getElementById('service-list');
+        const bottleneckChart = new Chart(bottleneckCtx, {
+            type: 'line',
+            data: {
+                labels: [], // Timestamps
+                datasets: [
+                    { label: 'nginx', data: [], borderColor: 'blue', backgroundColor: 'rgba(0, 0, 255, 0.3)', fill: true },
+                    { label: 'redis', data: [], borderColor: 'green', backgroundColor: 'rgba(0, 255, 0, 0.3)', fill: true },
+                    { label: 'mysql', data: [], borderColor: 'red', backgroundColor: 'rgba(255, 0, 0, 0.3)', fill: true },
+                    { label: 'elasticsearch', data: [], borderColor: 'purple', backgroundColor: 'rgba(128, 0, 128, 0.3)', fill: true },
+                    { label: 'nodejs-app', data: [], borderColor: 'orange', backgroundColor: 'rgba(255, 165, 0, 0.3)', fill: true },
+                    { label: 'postgresql', data: [], borderColor: 'yellow', backgroundColor: 'rgba(255, 255, 0, 0.3)', fill: true },
+                    { label: 'apache', data: [], borderColor: 'brown', backgroundColor: 'rgba(165, 42, 42, 0.3)', fill: true }
+                ]
+            },
+            options: {
+                scales: {
+                    x: { ticks: { color: '#ffffff' } },
+                    y: { stacked: true, ticks: { color: '#ffffff' } }
+                },
+                plugins: {
+                    legend: { labels: { color: '#ffffff' } }
+                }
+            }
+        });
+
+        function updateServiceList(serviceData) {
+            serviceListContainer.innerHTML = '<h3>Services</h3>'; // Clear list
+
+            serviceData.forEach(service => {
+                const avgCPU = service.cpu_usage.toFixed(2);
+                const avgMem = service.memory_usage.toFixed(2);
+                const avgLatency = service.network_latency.toFixed(2);
+
+                const serviceElement = document.createElement('div');
+                serviceElement.classList.add('service-item');
+
+                // If a service is hogging resources or causing a bottleneck
+                if (service.cpu_usage > 80 || service.memory_usage > 500 || service.network_latency > 300) {
+                    serviceElement.classList.add('red');
+                }
+
+                serviceElement.innerHTML = `
+                    <span class="service-name">${service.name}</span>
+                    <span class="service-status">CPU: ${avgCPU}% | MEM: ${avgMem}MB | LAT: ${avgLatency}ms</span>
+                    <button class="btn" onclick="putServiceToSleep('${service.name}')">Put to Sleep</button>
+                `;
+                serviceListContainer.appendChild(serviceElement);
+            });
+        }
+
+        // Real-time data streaming from the backend
+        const eventSource = new EventSource('/stream-bottleneck-data');
+        eventSource.onmessage = function(event) {
+            const serviceData = JSON.parse(event.data);
+            
+            // Update each dataset with the corresponding service's CPU usage
+            bottleneckChart.data.labels.push(new Date().toLocaleTimeString());
+            serviceData.forEach((service, index) => {
+                bottleneckChart.data.datasets[index].data.push(service.cpu_usage);
+            });
+            bottleneckChart.update();
+            updateServiceList(serviceData);
+        };
+
+        function putServiceToSleep(serviceName) {
+            alert(`Putting ${serviceName} to sleep.`);
+            // Implement logic to stop service or simulate stopping it
+        }
+    </script>
+</body>
+</html>

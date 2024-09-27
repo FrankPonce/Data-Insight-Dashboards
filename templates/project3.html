@@ -1,0 +1,279 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="/static/styles.css">
+    <title>Feature Rollout Manager</title>
+    <style>
+        body {
+            background-color: #1e1e1e;
+            color: #ffffff;
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+        }
+
+        h1, p {
+            text-align: center;
+        }
+
+        .dashboard {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            grid-template-rows: 1fr 1fr;
+            gap: 20px;
+            padding: 20px;
+            height: 90vh;
+        }
+
+        .chart-container, .controls {
+            background-color: rgba(0, 0, 0, 0.3);
+            border-radius: 10px;
+            padding: 20px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.5);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .controls {
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+        }
+
+        label {
+            color: #ffffff;
+        }
+
+        select, input[type="number"] {
+            background-color: #333333;
+            color: white;
+            border: 1px solid #555555;
+            padding: 10px;
+            border-radius: 5px;
+            width: 100%;
+            max-width: 300px;
+            margin-bottom: 20px;
+        }
+
+        .btn {
+            background-color: #4CAF50;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+
+        .btn:hover {
+            background-color: #45a049;
+        }
+
+        h3 {
+            color: #ffffff;
+            text-align: center;
+        }
+
+        canvas {
+            width: 100% !important;
+            height: 100% !important;
+        }
+
+        .chart-container {
+            max-height: 350px; /* Fix the max height for each chart */
+        }
+    </style>
+</head>
+<body>
+    <h1>Feature Rollout Manager</h1>
+    <p>Simulate and visualize the rollout of new features to different user groups.</p>
+    <a href="/" class="back-arrow">🡸 Back</a>
+
+    <div class="dashboard">
+        <!-- Rollout Controls (Upper Left) -->
+        <div class="controls">
+            <div>
+                <label for="feature-select">Select Feature:</label>
+                <select id="feature-select">
+                    <option value="new_ui">New UI</option>
+                    <option value="enhanced_security">Enhanced Security</option>
+                    <option value="dark_mode">Dark Mode</option>
+                </select>
+            </div>
+
+            <div>
+                <label for="user-privilege">User Privilege:</label>
+                <select id="user-privilege">
+                    <option value="admin">Admin</option>
+                    <option value="premium">Premium</option>
+                    <option value="regular">Regular</option>
+                </select>
+            </div>
+
+            <div>
+                <label for="user-count">Number of Users:</label>
+                <input type="number" id="user-count" value="100">
+            </div>
+
+            <button class="btn" onclick="rolloutFeature()">Rollout Feature</button>
+        </div>
+
+        <!-- Rollout Progress (Upper Right) -->
+        <div class="chart-container">
+            <h3>Rollout Progress</h3>
+            <canvas id="progress-chart"></canvas>
+        </div>
+
+        <!-- User Breakdown (Lower Left) -->
+        <div class="chart-container">
+            <h3>User Breakdown</h3>
+            <canvas id="user-chart"></canvas>
+        </div>
+
+        <!-- Historical Trends (Lower Right) -->
+        <div class="chart-container">
+            <h3>Historical Rollout Trends</h3>
+            <canvas id="historical-chart"></canvas>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+        let featureProgressChart, userBreakdownChart, historicalTrendChart;
+        let historicalData = { labels: [], datasets: [] };
+
+        // Initialize Charts
+        function initCharts() {
+            featureProgressChart = new Chart(document.getElementById('progress-chart').getContext('2d'), {
+                type: 'doughnut',
+                data: {
+                    labels: ['Enabled', 'Disabled'],
+                    datasets: [{
+                        data: [0, 1000],
+                        backgroundColor: ['green', 'gray']
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { labels: { color: 'white' } },
+                        tooltip: {
+                            callbacks: {
+                                label: function(tooltipItem) {
+                                    return tooltipItem.label + ': ' + tooltipItem.raw + ' users (' + 
+                                           ((tooltipItem.raw / 1000) * 100).toFixed(2) + '%)';
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+
+            userBreakdownChart = new Chart(document.getElementById('user-chart').getContext('2d'), {
+                type: 'bar',
+                data: {
+                    labels: ['Admin', 'Premium', 'Regular'],
+                    datasets: [{
+                        label: 'Users with Feature',
+                        data: [0, 0, 0],
+                        backgroundColor: ['blue', 'orange', 'red']
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { labels: { color: 'white' } }
+                    }
+                }
+            });
+
+            historicalTrendChart = new Chart(document.getElementById('historical-chart').getContext('2d'), {
+                type: 'line',
+                data: {
+                    labels: [],
+                    datasets: [
+                        { label: 'New UI', data: [], borderColor: 'blue', fill: false },
+                        { label: 'Enhanced Security', data: [], borderColor: 'orange', fill: false },
+                        { label: 'Dark Mode', data: [], borderColor: 'green', fill: false }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { labels: { color: 'white' } }
+                    }
+                }
+            });
+        }
+
+        function rolloutFeature() {
+            const feature = document.getElementById('feature-select').value;
+            const userPrivilege = document.getElementById('user-privilege').value;
+            const userCount = parseInt(document.getElementById('user-count').value);
+
+            // Send rollout data to the server
+            fetch('/rollout-feature', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ feature, user_privilege: userPrivilege, user_count: userCount })
+            })
+            .then(response => response.json())
+            .then(data => updateCharts(data.feature_data, feature));
+        }
+
+        function updateCharts(featureData, feature) {
+            const enabledUsers = featureData.enabled_users;
+            const totalUsers = featureData.total_users;
+
+            // Update doughnut chart
+            featureProgressChart.data.datasets[0].data = [enabledUsers, totalUsers - enabledUsers];
+            featureProgressChart.update();
+
+            // Update user breakdown chart
+            const userPrivileges = featureData.user_privileges;
+            userBreakdownChart.data.datasets[0].data = [
+                userPrivileges.admin,
+                userPrivileges.premium,
+                userPrivileges.regular
+            ];
+            userBreakdownChart.update();
+
+            // Update historical chart for all features
+            updateHistoricalTrends();
+        }
+
+        function updateHistoricalTrends() {
+            fetch('/get-feature-data?feature=new_ui').then(response => response.json()).then(uiData => {
+                fetch('/get-feature-data?feature=enhanced_security').then(response => response.json()).then(securityData => {
+                    fetch('/get-feature-data?feature=dark_mode').then(response => response.json()).then(darkModeData => {
+                        const currentTimestamp = new Date().toLocaleTimeString();
+                        
+                        historicalTrendChart.data.labels.push(currentTimestamp);
+                        historicalTrendChart.data.datasets[0].data.push(uiData.historical_data.slice(-1)[0]?.percentage || 0);
+                        historicalTrendChart.data.datasets[1].data.push(securityData.historical_data.slice(-1)[0]?.percentage || 0);
+                        historicalTrendChart.data.datasets[2].data.push(darkModeData.historical_data.slice(-1)[0]?.percentage || 0);
+
+                        historicalTrendChart.update();
+                    });
+                });
+            });
+        }
+
+        document.getElementById('feature-select').addEventListener('change', function () {
+            const feature = this.value;
+            fetch(`/get-feature-data?feature=${feature}`)
+            .then(response => response.json())
+            .then(data => updateCharts(data, feature));
+        });
+
+        // Initialize charts on page load
+        window.onload = initCharts;
+    </script>
+</body>
+</html>

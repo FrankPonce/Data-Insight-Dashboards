@@ -1,0 +1,295 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="/static/styles.css">
+    <title>Log Aggregation Tool</title>
+    <style>
+        body {
+            background-color: #1e1e1e;
+            color: #ffffff;
+            font-family: Arial, sans-serif;
+        }
+
+        h1, p {
+            text-align: center;
+        }
+
+        #log-container {
+            height: 200px;
+            overflow-y: scroll;
+            border: 1px solid #555;
+            border-radius: 1rem;
+            padding: 40px;
+            color: white;
+            padding-right: 80px;
+            margin-top: 10px;
+            padding-bottom: 10px;
+            background-color: rgba(0, 0, 0, 0);
+        }
+
+        .dashboard {
+            display: flex;
+            justify-content: space-between;
+            padding: 20px;
+            gap: 20px;
+            height: 300px;
+        }
+
+        .percentage-board {
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            width: 20%;
+            gap: 15px;
+        }
+
+        .percentage-item {
+            background-color: #2b2b2b;
+            padding: 20px;
+            border-radius: 10px;
+            height: 100px;
+            color: white;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.5);
+            text-align: center;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .percentage-item p {
+            font-size: 32px;
+            margin: 0;
+        }
+
+        .percentage-item h2 {
+            font-size: 14px;
+            margin: 0;
+        }
+
+        .chart-container {
+            width: 40%;
+            background-color: #2b2b2b;
+            border-radius: 10px;
+            height: 100%;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.5);
+        }
+
+        .chart-container.donut {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .log-level-distribution {
+            width: 80%;
+            margin: 0 auto;
+        }
+
+        #log-container-wrapper {
+            width: calc(100% - 80px);
+            height: 300px;
+            background-color: #2b2b2b;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.5);
+            padding: 20px;
+            margin-left: 20px;
+            margin-top: 10px;
+        }
+
+        canvas {
+            width: 100%;
+            height: 100%;
+            background: #2b2b2b;
+            border-radius: 5px;
+        }
+
+        h3 {
+            color: #ffffff;
+            text-align: center;
+        }
+
+        .filter-container {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0 20px;
+        }
+
+        select {
+            padding: 10px;
+            background-color: #444;
+            color: white;
+            border: 1px solid #555;
+            border-radius: 5px;
+        }
+
+        .full {
+            display: flex;
+            justify-content: space-between;
+            flex-direction: column;
+            padding: 40px;
+            gap: 20px;
+        }
+    </style>
+</head>
+<body>
+    <h1>Log Aggregation Tool</h1>
+    <p>This project aggregates logs from multiple sources and visualizes them in real-time.</p>
+    <a href="/" class="back-arrow">
+        🡸 Back
+    </a>
+
+    <div class="full">
+        <div class="dashboard">
+            <div class="percentage-board">
+                <div class="percentage-item" id="info-percentage">
+                    <p id="info-percentage-value" style="color: blue;">0.0%</p>
+                    <h2>INFO</h2>
+                </div>
+                <div class="percentage-item" id="error-percentage">
+                    <p id="error-percentage-value" style="color: red;">0.0%</p>
+                    <h2>ERROR</h2>
+                </div>
+                <div class="percentage-item" id="warning-percentage">
+                    <p id="warning-percentage-value" style="color: orange;">0.0%</p>
+                    <h2>WARNING</h2>
+                </div>
+            </div>
+
+            <div class="chart-container">
+                <h3>Log Volume Over Time</h3>
+                <canvas id="log-chart"></canvas>
+            </div>
+
+            <div class="chart-container donut">
+                <h3>Log Level Distribution</h3>
+                <canvas id="log-level-distribution" class="log-level-distribution"></canvas>
+            </div>
+        </div>
+
+        <div id="log-container-wrapper">
+            <div class="filter-container">
+                <h3>Logs Console</h3>
+                <select id="log-filter">
+                    <option value="all">All Logs</option>
+                    <option value="INFO">Info</option>
+                    <option value="ERROR">Error</option>
+                    <option value="WARNING">Warning</option>
+                </select>
+            </div>
+            <div id="log-container"></div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+        const logContainer = document.getElementById('log-container');
+        const logFilter = document.getElementById('log-filter');
+        const logLevels = { 'INFO': 0, 'ERROR': 0, 'WARNING': 0, 'TOTAL': 0 };
+        const eventSource = new EventSource("/log-stream");
+
+        const logChartCtx = document.getElementById('log-chart').getContext('2d');
+        const logChart = new Chart(logChartCtx, {
+            type: 'line',
+            data: {
+                labels: [],
+                datasets: [
+                    { label: 'INFO', data: [], borderColor: 'blue', fill: false },
+                    { label: 'ERROR', data: [], borderColor: 'red', fill: false },
+                    { label: 'WARNING', data: [], borderColor: 'orange', fill: false }
+                ]
+            },
+            options: {
+                scales: {
+                    x: { ticks: { color: '#ffffff' } },
+                    y: { ticks: { color: '#ffffff' } }
+                },
+                plugins: {
+                    legend: { labels: { color: '#ffffff' } }
+                }
+            }
+        });
+
+        const logLevelDistributionCtx = document.getElementById('log-level-distribution').getContext('2d');
+        const logLevelDistribution = new Chart(logLevelDistributionCtx, {
+            type: 'doughnut',
+            data: {
+                labels: ['INFO', 'ERROR', 'WARNING'],
+                datasets: [{
+                    data: [logLevels.INFO, logLevels.ERROR, logLevels.WARNING],
+                    backgroundColor: ['blue', 'red', 'orange']
+                }]
+            },
+            options: {
+                plugins: {
+                    legend: { labels: { color: '#ffffff' } }
+                }
+            }
+        });
+
+        function updatePercentages() {
+            const totalLogs = logLevels.TOTAL || 1;
+            document.getElementById('info-percentage-value').innerText = ((logLevels.INFO / totalLogs) * 100).toFixed(1) + '%';
+            document.getElementById('error-percentage-value').innerText = ((logLevels.ERROR / totalLogs) * 100).toFixed(1) + '%';
+            document.getElementById('warning-percentage-value').innerText = ((logLevels.WARNING / totalLogs) * 100).toFixed(1) + '%';
+        }
+
+        eventSource.onmessage = function(event) {
+            const logLine = event.data; // Get the incoming log data
+        
+            // Apply log filter
+            const logDiv = document.createElement('div'); // Create a new div for each log entry
+            logDiv.textContent = logLine; // Set the log message as the div content
+        
+            // Append the log entry to the log container
+            logContainer.appendChild(logDiv);
+        
+            // Automatically scroll to the bottom to see the latest logs
+            logContainer.scrollTop = logContainer.scrollHeight;
+        
+            // Extract log level and timestamp
+            const level = logLine.split(' - ')[1].split(':')[0];
+            const timestamp = logLine.split(' ')[0];
+        
+            // Update the log level counts
+            logLevels[level]++;
+            logLevels.TOTAL++;
+        
+            // Update the log volume chart with new data
+            logChart.data.labels.push(timestamp);
+            logChart.data.datasets[0].data.push(logLevels['INFO']);
+            logChart.data.datasets[1].data.push(logLevels['ERROR']);
+            logChart.data.datasets[2].data.push(logLevels['WARNING']);
+            logChart.update();
+        
+            // Update log level distribution
+            logLevelDistribution.data.datasets[0].data = [
+                logLevels.INFO,
+                logLevels.ERROR,
+                logLevels.WARNING
+            ];
+            logLevelDistribution.update();
+        
+            // Update percentage display for each log level
+            updatePercentages();
+        };
+        
+        
+
+        logFilter.addEventListener('change', function() {
+            const filterValue = logFilter.value;
+            const logLines = logContainer.innerHTML.split('<br>');
+            logContainer.innerHTML = '';
+
+            logLines.forEach(line => {
+                if (filterValue === 'all' || line.includes(filterValue)) {
+                    logContainer.innerHTML += line + '<br>';
+                }
+            });
+        });
+    </script>
+</body>
+</html>

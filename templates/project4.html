@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Distributed Monitoring</title>
+    <link rel="stylesheet" href="/static/styles.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        body {
+            background-color: #1e1e1e;
+            color: #ffffff;
+            font-family: Arial, sans-serif;
+        }
+
+        h1, p {
+            text-align: center;
+        }
+
+        .dashboard {
+            display: flex;
+            justify-content: space-between;
+            padding: 20px;
+            gap: 20px;
+        }
+
+        .chart-container {
+            width: 45%;
+            background-color: #2b2b2b;
+            border-radius: 10px;
+            padding: 20px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.5);
+        }
+
+        .alert-container {
+            width: 100%;
+            background-color: #ff4d4d;
+            border-radius: 10px;
+            padding: 20px;
+            margin-top: 20px;
+            color: white;
+            display: none; /* Hidden by default, will be shown in case of an alert */
+        }
+
+        .node-visualization {
+            display: flex;
+            justify-content: space-around;
+            padding: 20px;
+            margin-top: 20px;
+        }
+
+        .node {
+            background-color: #2b2b2b;
+            border-radius: 50%;
+            width: 100px;
+            height: 100px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.5);
+            position: relative;
+        }
+
+        .node-status {
+            position: absolute;
+            top: -30px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 14px;
+            text-align: center;
+        }
+
+        .node .status-circle {
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+        }
+
+        .healthy {
+            background-color: #4caf50;
+        }
+
+        .warning {
+            background-color: #ff9800;
+        }
+
+        .unhealthy {
+            background-color: #f44336;
+        }
+    </style>
+</head>
+<body>
+
+    <h1>Real-Time Distributed Monitoring</h1>
+    <p>Monitoring CPU, Latency, and Node Status with Real-Time Anomaly Detection</p>
+    <a href="/" class="back-arrow">
+        🡸 Back
+    </a>
+
+    <div class="dashboard">
+        <!-- CPU Usage Chart -->
+        <div class="chart-container">
+            <h3>CPU Usage Across Nodes</h3>
+            <canvas id="cpuChart"></canvas>
+        </div>
+
+        <!-- Latency Chart -->
+        <div class="chart-container">
+            <h3>Network Latency Across Nodes</h3>
+            <canvas id="latencyChart"></canvas>
+        </div>
+    </div>
+
+    <!-- Node Visualization -->
+    <div class="node-visualization">
+        <div class="node" id="node1">
+            <div class="status-circle healthy"></div>
+            <h3>Node 1</h3>
+            <p>CPU: <span id="node1-cpu">0%</span></p>
+            <p>Latency: <span id="node1-latency">0ms</span></p>
+        </div>
+        <div class="node" id="node2">
+            <div class="status-circle healthy"></div>
+            <h3>Node 2</h3>
+            <p>CPU: <span id="node2-cpu">0%</span></p>
+            <p>Latency: <span id="node2-latency">0ms</span></p>
+        </div>
+        <div class="node" id="node3">
+            <div class="status-circle healthy"></div>
+            <h3>Node 3</h3>
+            <p>CPU: <span id="node3-cpu">0%</span></p>
+            <p>Latency: <span id="node3-latency">0ms</span></p>
+        </div>
+    </div>
+
+    <!-- Alerts Section -->
+    <div class="alert-container" id="alertContainer">
+        <h2>⚠️ Alert: Anomaly Detected in Node Performance ⚠️</h2>
+        <p id="alertMessage"></p>
+    </div>
+
+    <script>
+        let timeSeries = [];  // Store the time data
+
+        const cpuChartCtx = document.getElementById('cpuChart').getContext('2d');
+        const latencyChartCtx = document.getElementById('latencyChart').getContext('2d');
+
+        // Initialize the CPU and Latency Charts with 3 lines for each node
+        const cpuChart = new Chart(cpuChartCtx, {
+            type: 'line',
+            data: {
+                labels: timeSeries,
+                datasets: [
+                    {label: 'Node 1 CPU (%)', data: [], backgroundColor: 'rgba(54, 162, 235, 0.2)', borderColor: 'rgba(54, 162, 235, 1)', borderWidth: 1, fill: true},
+                    {label: 'Node 2 CPU (%)', data: [], backgroundColor: 'rgba(255, 206, 86, 0.2)', borderColor: 'rgba(255, 206, 86, 1)', borderWidth: 1, fill: true},
+                    {label: 'Node 3 CPU (%)', data: [], backgroundColor: 'rgba(75, 192, 192, 0.2)', borderColor: 'rgba(75, 192, 192, 1)', borderWidth: 1, fill: true}
+                ]
+            },
+            options: {
+                animation: false,  // Disable animation for real-time clarity
+                scales: {
+                    x: { ticks: { color: '#ffffff' } },
+                    y: {
+                        beginAtZero: true,
+                        max: 100,
+                        ticks: { color: '#ffffff' }
+                    }
+                },
+                plugins: {
+                    legend: { labels: { color: '#ffffff' } }
+                }
+            }
+        });
+
+        const latencyChart = new Chart(latencyChartCtx, {
+            type: 'line',
+            data: {
+                labels: timeSeries,
+                datasets: [
+                    {label: 'Node 1 Latency (ms)', data: [], backgroundColor: 'rgba(255, 99, 132, 0.2)', borderColor: 'rgba(255, 99, 132, 1)', borderWidth: 1, fill: true},
+                    {label: 'Node 2 Latency (ms)', data: [], backgroundColor: 'rgba(153, 102, 255, 0.2)', borderColor: 'rgba(153, 102, 255, 1)', borderWidth: 1, fill: true},
+                    {label: 'Node 3 Latency (ms)', data: [], backgroundColor: 'rgba(255, 159, 64, 0.2)', borderColor: 'rgba(255, 159, 64, 1)', borderWidth: 1, fill: true}
+                ]
+            },
+            options: {
+                animation: false,  // Disable animation for real-time clarity
+                scales: {
+                    x: { ticks: { color: '#ffffff' } },
+                    y: {
+                        beginAtZero: true,
+                        ticks: { color: '#ffffff' }
+                    }
+                },
+                plugins: {
+                    legend: { labels: { color: '#ffffff' } }
+                }
+            }
+        });
+
+        // Function to update the charts and node statuses
+        function updateChartsAndNodes(nodeData) {
+            const alertContainer = document.getElementById('alertContainer');
+            let alertMessage = '';
+            let anomalyDetected = false;
+
+            const timeSeriesLength = nodeData.time_series.length;
+            cpuChart.data.labels = nodeData.time_series;
+            latencyChart.data.labels = nodeData.time_series;
+
+            // Update CPU chart with all 3 nodes' data
+            cpuChart.data.datasets[0].data = nodeData.node_data['Node 1'].cpu.slice(-timeSeriesLength);
+            cpuChart.data.datasets[1].data = nodeData.node_data['Node 2'].cpu.slice(-timeSeriesLength);
+            cpuChart.data.datasets[2].data = nodeData.node_data['Node 3'].cpu.slice(-timeSeriesLength);
+
+            // Update Latency chart with all 3 nodes' data
+            latencyChart.data.datasets[0].data = nodeData.node_data['Node 1'].latency.slice(-timeSeriesLength);
+            latencyChart.data.datasets[1].data = nodeData.node_data['Node 2'].latency.slice(-timeSeriesLength);
+            latencyChart.data.datasets[2].data = nodeData.node_data['Node 3'].latency.slice(-timeSeriesLength);
+
+            cpuChart.update();
+            latencyChart.update();
+
+            for (let i = 1; i <= 3; i++) {
+                const cpu = nodeData.node_data[`Node ${i}`].cpu.slice(-1)[0].toFixed(1);
+                const latency = nodeData.node_data[`Node ${i}`].latency.slice(-1)[0].toFixed(1);
+
+                document.getElementById(`node${i}-cpu`).textContent = `${cpu}%`;
+                document.getElementById(`node${i}-latency`).textContent = `${latency}ms`;
+
+                const statusCircle = document.querySelector(`#node${i} .status-circle`);
+                const nodeStatus = nodeData.node_data[`Node ${i}`].status;
+
+                if (nodeStatus === 'Healthy') {
+                    statusCircle.className = 'status-circle healthy';
+                } else if (nodeStatus === 'Warning') {
+                    statusCircle.className = 'status-circle warning';
+                } else {
+                    statusCircle.className = 'status-circle unhealthy';
+                    alertMessage += `Node ${i} is experiencing issues (CPU: ${cpu}%, Latency: ${latency}ms)\n`;
+                    anomalyDetected = true;
+                }
+            }
+
+            if (anomalyDetected) {
+                alertContainer.style.display = 'block';
+                document.getElementById('alertMessage').innerText = alertMessage;
+            } else {
+                alertContainer.style.display = 'none';
+            }
+        }
+
+        // Establish connection to stream node data
+        const evtSource = new EventSource('/stream-node-data');
+        evtSource.onmessage = function(event) {
+            const nodeData = JSON.parse(event.data);
+            updateChartsAndNodes(nodeData);
+        };
+    </script>
+</body>
+</html>

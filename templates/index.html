@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Data Insight Dashboards</title>
+    <link rel="stylesheet" href="/static/styles.css">
+    <style>
+        /* General Styles */
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #1f1f1f, #333);
+            color: #f0f0f0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            position: relative;
+            overflow: hidden;
+            flex-direction: column;
+        }
+
+        h1 {
+            font-size: 3em;
+            color: #f7f7f7;
+            text-align: center;
+            margin-bottom: 0;
+            z-index: 2;
+        }
+
+        /* Subheader with smaller text and link */
+        .subheader {
+            font-size: 1.5em; /* Slightly smaller */
+            color: #bbbbbb;
+            text-align: center;
+            margin-bottom: 30px;
+            z-index: 2;
+        }
+
+        .subheader a {
+            color: #00aced;
+            text-decoration: none;
+            transition: color 0.3s ease;
+        }
+
+        .subheader a:hover {
+            color: #1ec0ff;
+        }
+
+        /* Button Container */
+        .btn-container {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            grid-gap: 20px;
+            justify-content: center;
+            align-items: center;
+            z-index: 2;
+        }
+
+        .btn-container .single {
+            grid-column: 1 / -1;
+            justify-self: center;
+        }
+
+        /* Button Styles */
+        .project-btn {
+            background-color: #2f2f2f;
+            border: 2px solid #444;
+            border-radius: 10px;
+            width: 250px;   /* Fixed width */
+            height: 120px;   /* Fixed height */
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 1.2em;
+            color: #f0f0f0;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+            box-shadow: 0 8px 15px rgba(0, 0, 0, 0.2);
+            letter-spacing: 1px;
+            text-align: center;
+        }
+
+        .project-btn:hover {
+            background: #444;
+            border-color: #5e5e5e;
+            transform: scale(1.05);
+            box-shadow: 0 12px 20px rgba(0, 0, 0, 0.3);
+        }
+
+        .btn-color-2 {
+            background: linear-gradient(135deg, #2b2b2b, #3e3e3e);
+        }
+
+        .project-btn:active {
+            background: #222;
+            transform: scale(1.02);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        /* Background geometric hexagons */
+        .shape {
+            position: absolute;
+            width: 300px;
+            height: 300px;
+            background: rgba(255, 255, 255, 0.05);
+            clip-path: polygon(50% 0%, 93% 25%, 93% 75%, 50% 100%, 7% 75%, 7% 25%);
+            animation: float 6s ease-in-out infinite;
+        }
+
+        .shape-1 {
+            width: 300px;
+            height: 300px;
+            top: 10%;
+            left: -50px;
+        }
+
+        .shape-2 {
+            width: 400px;
+            height: 400px;
+            bottom: -100px;
+            right: 20%;
+        }
+
+        .shape-3 {
+            width: 200px;
+            height: 200px;
+            bottom: 10%;
+            left: 25%;
+        }
+
+        .shape-4 {
+            width: 350px;
+            height: 350px;
+            top: 50%;
+            left: 70%;
+        }
+
+        @keyframes float {
+            0% {
+                transform: translateY(0px);
+            }
+            50% {
+                transform: translateY(-20px);
+            }
+            100% {
+                transform: translateY(0px);
+            }
+        }
+
+        /* Responsive Design */
+        @media screen and (max-width: 768px) {
+            h1 {
+                font-size: 2.5em;
+            }
+
+            .subheader {
+                font-size: 1.2em;
+            }
+
+            .project-btn {
+                width: 180px;
+                height: 70px;
+                font-size: 1em;
+            }
+
+            .shape {
+                display: none; /* Hide shapes on small screens */
+            }
+        }
+
+        @media screen and (max-width: 480px) {
+            h1 {
+                font-size: 2em;
+            }
+
+            .subheader {
+                font-size: 1em;
+            }
+
+            .project-btn {
+                width: 150px;
+                height: 60px;
+                font-size: 0.9em;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <h1>Metrics Dashboards</h1>
+    <p class="subheader">By <a href="https://frank-mediavilla.netlify.app/" target="_blank">Frank Mediavilla</a></p>
+
+    <div class="btn-container">
+        <button class="btn btn-color-2 project-btn" onclick="location.href='/project1'">
+            Log Aggregation Tool 📝
+        </button>
+        <button class="btn btn-color-2 project-btn" onclick="location.href='/project2'">
+            Service Bottleneck Detector 🔍
+        </button>
+        <button class="btn btn-color-2 project-btn" onclick="location.href='/project3'">
+            Feature Rollout Manager 📆
+        </button>
+        <button class="btn btn-color-2 project-btn" onclick="location.href='/project4'">
+            Distributed Monitoring System 📊
+        </button>
+        <button class="btn btn-color-2 project-btn single" onclick="location.href='/project5'">
+            Kubernetes Metrics Visualizer 📈
+        </button>
+    </div>
+
+    <!-- Translucent geometric hexagons -->
+    <div class="shape shape-1"></div>
+    <div class="shape shape-2"></div>
+    <div class="shape shape-3"></div>
+    <div class="shape shape-4"></div>
+
+</body>
+</html>
