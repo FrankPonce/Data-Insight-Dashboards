@@ -1,10 +1,13 @@
 services:
-  - type: web
+ - type: web
     name: flask-backend
     env: python
     region: oregon
     plan: free
-    buildCommand: pip install -r requirements.txt
+    buildCommand: |
+      sudo apt-get update
+      sudo apt-get install -y portaudio19-dev
+      pip install -r requirements.txt
     startCommand: python app.py
     autoDeploy: true
 
